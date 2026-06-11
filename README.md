@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CartãoControl
 
-## Getting Started
+Web app financeiro pessoal para controlar cartões de crédito, faturas, parcelas, recorrências, limites e dashboards.
 
-First, run the development server:
+## Stack
+
+- Next.js com App Router
+- React e TypeScript
+- Tailwind CSS
+- Zustand para estado global
+- IndexedDB para persistência local
+- Zod para validação
+- date-fns para datas
+- Recharts para gráficos
+- PWA com manifest e service worker
+
+## Rodar localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build e qualidade
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-## Learn More
+## Publicar na Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Suba este projeto para um repositório GitHub.
+2. Na Vercel, importe o repositório.
+3. Use o preset Next.js.
+4. Se o repositório estiver com este app dentro da pasta `cartaocontrol`, configure `Root Directory` como `cartaocontrol`.
+5. O build command padrão é `npm run build`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Não há banco externo obrigatório nesta versão.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## PWA
 
-## Deploy on Vercel
+O app inclui `manifest.webmanifest`, ícones e `public/sw.js`. Em celulares e navegadores compatíveis, use a opção "Adicionar à tela inicial". O service worker mantém um cache básico das rotas e assets principais para uso offline parcial.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Backup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Em `Configurações`:
+
+- `Exportar backup` gera um JSON com todos os dados.
+- `Importar backup` valida o arquivo com Zod antes de substituir os dados locais.
+- `Limpar dados` exige confirmação forte.
+- `Carregar dados de exemplo` substitui os dados atuais por uma base de teste.
+
+## Limitações da versão local
+
+- Os dados ficam somente no navegador/dispositivo.
+- Limpar dados do navegador remove as informações.
+- Não há login, multiusuário ou sincronização em nuvem.
+- O service worker oferece offline parcial, não sincronização offline completa.
+
+## Próximos passos previstos
+
+- Login e usuários.
+- Supabase ou PostgreSQL.
+- Sincronização em nuvem.
+- Notificações de vencimento.
+- Importação de CSV de faturas.
+- Leitura automatizada de e-mails.
