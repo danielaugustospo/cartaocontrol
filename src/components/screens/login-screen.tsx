@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CloudDownload, CloudUpload, LogOut, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -10,29 +10,72 @@ import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { pullFinanceDataFromCloud, pushFinanceDataToCloud } from "@/lib/cloud/sync";
 import { useFinanceStore } from "@/store/use-finance-store";
 
+const EMAIL_COOLDOWN_SECONDS = 60;
+const cooldownKey = (email: string) => `cartaocontrol-login-cooldown:${email.toLowerCase()}`;
+
+const getFriendlyAuthError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : "Não foi possível enviar o link de acesso.";
+  const normalized = message.toLowerCase();
+  if (normalized.includes("rate limit") || normalized.includes("too many")) {
+    return "Limite de envio de e-mails atingido no Supabase. Aguarde alguns minutos antes de tentar novamente. Para produção, configure SMTP próprio no Supabase Auth.";
+  }
+  return message;
+};
+
 export function LoginScreen() {
   const auth = useSupabaseAuth();
   const replaceData = useFinanceStore((state) => state.replaceData);
   const exportBackup = useFinanceStore((state) => state.exportBackup);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [now, setNow] = useState(0);
   const localSummary = useLocalSummary();
+
+  const cooldownRemaining = Math.max(Math.ceil((cooldownUntil - now) / 1000), 0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const handleEmailChange = (nextEmail: string) => {
+    setEmail(nextEmail);
+    setNow(Date.now());
+    if (!nextEmail) {
+      setCooldownUntil(0);
+      return;
+    }
+    const stored = Number(localStorage.getItem(cooldownKey(nextEmail)) ?? 0);
+    setCooldownUntil(Number.isFinite(stored) ? stored : 0);
+  };
 
   const submitLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setNotice("");
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "").trim();
-    if (!email) {
+    const submittedEmail = String(form.get("email") ?? "").trim().toLowerCase();
+    if (!submittedEmail) {
       setNotice("Informe um e-mail.");
       return;
     }
+    const storedCooldown = Number(localStorage.getItem(cooldownKey(submittedEmail)) ?? 0);
+    if (storedCooldown > Date.now()) {
+      setCooldownUntil(storedCooldown);
+      setNotice(`Aguarde ${Math.ceil((storedCooldown - Date.now()) / 1000)}s antes de solicitar outro link para este e-mail.`);
+      return;
+    }
+
     try {
       setBusy(true);
-      await auth.signInWithEmail(email);
-      setNotice("Enviamos um link de acesso para seu e-mail.");
+      await auth.signInWithEmail(submittedEmail);
+      const nextCooldown = Date.now() + EMAIL_COOLDOWN_SECONDS * 1000;
+      localStorage.setItem(cooldownKey(submittedEmail), String(nextCooldown));
+      setCooldownUntil(nextCooldown);
+      setNotice("Enviamos um link de acesso para seu e-mail. Use o mesmo link em vez de pedir outro em cada navegador.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Não foi possível enviar o link de acesso.");
+      setNotice(getFriendlyAuthError(error));
     } finally {
       setBusy(false);
     }
@@ -104,11 +147,26 @@ export function LoginScreen() {
             ) : (
               <form className="space-y-4" onSubmit={submitLogin}>
                 <Field label="E-mail">
-                  <Input name="email" type="email" placeholder="voce@empresa.com" autoComplete="email" />
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="voce@empresa.com"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => handleEmailChange(event.target.value)}
+                  />
                 </Field>
-                <Button type="submit" icon={<Mail className="h-4 w-4" />} disabled={busy || auth.loading}>
-                  Enviar link de acesso
+                <Button
+                  type="submit"
+                  icon={<Mail className="h-4 w-4" />}
+                  disabled={busy || auth.loading || cooldownRemaining > 0}
+                >
+                  {cooldownRemaining > 0 ? `Aguarde ${cooldownRemaining}s` : "Enviar link de acesso"}
                 </Button>
+                <p className="text-sm text-slate-500">
+                  O provedor padrão do Supabase tem limite baixo de e-mails. Evite pedir vários links seguidos; para produção,
+                  configure SMTP próprio no Supabase Auth.
+                </p>
               </form>
             )}
           </CardBody>

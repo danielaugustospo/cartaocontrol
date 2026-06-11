@@ -61,6 +61,12 @@ Essas variáveis são públicas do client Supabase. Não coloque `service_role` 
 
 A sincronização inicial salva um JSON por usuário na tabela `finance_data`. Esse desenho é simples de manter e permite evoluir depois para tabelas relacionais normalizadas.
 
+### Limite de e-mail do Supabase Auth
+
+O SMTP padrão do Supabase é apenas para testes e tem limite baixo de envio. Se aparecer `email rate limit exceeded`, aguarde a janela de limite antes de solicitar outro magic link.
+
+Para produção, configure SMTP próprio em `Supabase > Authentication > SMTP Settings`, usando um provedor como Resend, AWS SES, Postmark, SendGrid, ZeptoMail ou Brevo. Depois ajuste `Authentication > Rate Limits` conforme o volume esperado.
+
 ## PWA
 
 O app inclui `manifest.webmanifest`, ícones e `public/sw.js`. Em celulares e navegadores compatíveis, use a opção "Adicionar à tela inicial". O service worker mantém um cache básico das rotas e assets principais para uso offline parcial.
