@@ -1,10 +1,24 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
-import { Database, Download, RefreshCw, Smartphone, Trash2, Upload } from "lucide-react";
+import {
+  Bell,
+  Database,
+  Download,
+  FileUp,
+  RefreshCw,
+  Smartphone,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Notice, PageHeader } from "@/components/ui/page";
+import { parseInvoiceCsv } from "@/lib/importers/invoice-csv";
+import {
+  notifyUpcomingInvoices,
+  requestDueNotificationPermission,
+} from "@/lib/notifications/due-notifications";
 import { useFinanceStore } from "@/store/use-finance-store";
 
 type BeforeInstallPromptEvent = Event & {
@@ -25,6 +39,14 @@ export function SettingsScreen() {
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+
+  const financeData = {
+    cards: store.cards,
+    purchases: store.purchases,
+    recurringExpenses: store.recurringExpenses,
+    invoicePayments: store.invoicePayments,
+    categories: store.categories,
+  };
 
   const exportBackup = () => {
     const backup = store.exportBackup();
@@ -55,6 +77,26 @@ export function SettingsScreen() {
     }
   };
 
+  const importCsv = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!window.confirm("Importar este CSV criará compras novas a partir das linhas válidas. Continuar?")) return;
+
+    try {
+      const result = parseInvoiceCsv(await file.text(), store.cards, store.categories);
+      for (const purchase of result.purchases) {
+        await store.addPurchase(purchase);
+      }
+      const warningText = result.warnings.length ? ` Avisos: ${result.warnings.slice(0, 3).join(" ")}` : "";
+      setNotice(`${result.purchases.length} compra(s) importada(s) do CSV.${warningText}`);
+    } catch (error) {
+      console.error(error);
+      setNotice("Não foi possível importar o CSV.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   const clearData = async () => {
     const confirmation = window.prompt('Digite "LIMPAR" para apagar todos os dados locais.');
     if (confirmation !== "LIMPAR") return;
@@ -79,11 +121,25 @@ export function SettingsScreen() {
     setNotice(choice.outcome === "accepted" ? "Instalação iniciada." : "Instalação cancelada.");
   };
 
+  const enableNotifications = async () => {
+    const permission = await requestDueNotificationPermission();
+    if (permission === "unsupported") {
+      setNotice("Este navegador não suporta notificações locais.");
+      return;
+    }
+    if (permission !== "granted") {
+      setNotice("Permissão de notificações não concedida.");
+      return;
+    }
+    const sent = notifyUpcomingInvoices(financeData);
+    setNotice(sent ? `${sent} notificação(ões) enviada(s).` : "Notificações ativadas. Não há faturas vencendo nos próximos dias.");
+  };
+
   return (
     <>
       <PageHeader
         title="Configurações"
-        description="Backup local, manutenção dos dados e opções de instalação do PWA."
+        description="Backup local, importação, manutenção dos dados, notificações e opções de instalação do PWA."
       />
       {notice ? <Notice>{notice}</Notice> : null}
 
@@ -103,6 +159,20 @@ export function SettingsScreen() {
         </Card>
 
         <Card>
+          <CardHeader title="Importar CSV de fatura" description="Crie compras a partir de um arquivo CSV exportado pelo banco." />
+          <CardBody className="space-y-3">
+            <label className="inline-flex min-h-10 w-full cursor-pointer items-center justify-start gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+              <FileUp className="h-4 w-4" />
+              Importar CSV
+              <input type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => void importCsv(event)} />
+            </label>
+            <p className="text-sm text-slate-500">
+              Colunas aceitas: descrição, valor, data, cartão, categoria, parcelas e observação. Linhas sem cartão usam o primeiro cartão cadastrado.
+            </p>
+          </CardBody>
+        </Card>
+
+        <Card>
           <CardHeader title="Dados de exemplo" description="Carregue cartões, compras, parcelas, recorrências e faturas para teste." />
           <CardBody className="space-y-3">
             <Button className="w-full justify-start" variant="secondary" icon={<Database className="h-4 w-4" />} onClick={() => void loadSeed()}>
@@ -111,6 +181,18 @@ export function SettingsScreen() {
             <Button className="w-full justify-start" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => void clearData()}>
               Limpar dados
             </Button>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Notificações" description="Alertas locais para faturas próximas do vencimento." />
+          <CardBody className="space-y-3">
+            <Button className="w-full justify-start" icon={<Bell className="h-4 w-4" />} onClick={() => void enableNotifications()}>
+              Ativar notificações de vencimento
+            </Button>
+            <p className="text-sm text-slate-500">
+              Nesta versão, as notificações funcionam localmente quando o navegador permite e o app é aberto.
+            </p>
           </CardBody>
         </Card>
 
@@ -127,12 +209,12 @@ export function SettingsScreen() {
         </Card>
 
         <Card>
-          <CardHeader title="Arquitetura futura" description="A persistência foi isolada para permitir troca por Supabase ou PostgreSQL." />
+          <CardHeader title="Arquitetura futura" description="A persistência foi isolada para permitir troca por tabelas relacionais." />
           <CardBody>
             <ul className="space-y-2 text-sm text-slate-600">
-              <li className="flex gap-2"><RefreshCw className="mt-0.5 h-4 w-4 text-teal-700" /> Login e sincronização em nuvem.</li>
-              <li className="flex gap-2"><RefreshCw className="mt-0.5 h-4 w-4 text-teal-700" /> Multiusuário e compartilhamento de cartões.</li>
-              <li className="flex gap-2"><RefreshCw className="mt-0.5 h-4 w-4 text-teal-700" /> Notificações de vencimento e importação de CSV.</li>
+              <li className="flex gap-2"><RefreshCw className="mt-0.5 h-4 w-4 text-teal-700" /> Supabase Auth e sincronização em nuvem por usuário.</li>
+              <li className="flex gap-2"><RefreshCw className="mt-0.5 h-4 w-4 text-teal-700" /> Normalização futura em PostgreSQL para multiusuário.</li>
+              <li className="flex gap-2"><RefreshCw className="mt-0.5 h-4 w-4 text-teal-700" /> Leitura de e-mails exigirá OAuth/IMAP e backend seguro.</li>
             </ul>
           </CardBody>
         </Card>

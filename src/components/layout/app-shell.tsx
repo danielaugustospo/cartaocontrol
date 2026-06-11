@@ -11,6 +11,7 @@ import {
   ReceiptText,
   Settings,
   Tags,
+  UserRound,
   WalletCards,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -23,6 +24,7 @@ const nav = [
   { href: "/recorrencias", label: "Recorrências", icon: CalendarDays },
   { href: "/faturas", label: "Faturas", icon: WalletCards },
   { href: "/categorias", label: "Categorias", icon: Tags },
+  { href: "/login", label: "Conta", icon: UserRound },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 

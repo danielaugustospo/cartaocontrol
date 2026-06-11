@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/layout/app-shell";
+import { DueNotificationRunner } from "@/components/notifications/due-notification-runner";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
 import "./globals.css";
 
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body>
         <ServiceWorkerRegistration />
+        <DueNotificationRunner />
         <AppShell>{children}</AppShell>
       </body>
     </html>
