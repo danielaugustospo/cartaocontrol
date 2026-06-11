@@ -34,10 +34,11 @@ export function useSupabaseAuth() {
   const signInWithEmail = useCallback(
     async (email: string) => {
       if (!supabase) throw new Error("Supabase não configurado.");
+      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, "");
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: `${siteUrl}/login`,
         },
       });
       if (error) throw error;
