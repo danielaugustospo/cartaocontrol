@@ -89,6 +89,7 @@ Na rota `/login`:
 - Envio de magic link por e-mail quando Supabase está configurado.
 - Enviar dados locais para a nuvem.
 - Baixar backup da nuvem para o navegador atual.
+- Sincronização automática: ao logar em um navegador vazio, o app baixa `finance_data`; se a nuvem estiver vazia e houver dados locais no navegador logado, cria o primeiro backup; depois salva alterações locais automaticamente.
 
 ## Limitações atuais
 

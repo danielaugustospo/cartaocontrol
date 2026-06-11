@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { CloudSyncRunner } from "@/components/cloud/cloud-sync-runner";
 import { AppShell } from "@/components/layout/app-shell";
 import { DueNotificationRunner } from "@/components/notifications/due-notification-runner";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body>
         <ServiceWorkerRegistration />
+        <CloudSyncRunner />
         <DueNotificationRunner />
         <AppShell>{children}</AppShell>
       </body>

@@ -68,7 +68,7 @@ export function SettingsScreen() {
     try {
       const json = JSON.parse(await file.text());
       await store.importBackup(json);
-      setNotice("Backup importado com sucesso.");
+      setNotice("Backup importado com sucesso. Se você estiver logado neste navegador, os dados serão enviados automaticamente para a nuvem.");
     } catch (error) {
       console.error(error);
       setNotice("Arquivo inválido. O backup não foi importado.");

@@ -198,8 +198,9 @@ export function LoginScreen() {
               </Button>
             </div>
             <p className="text-sm text-slate-500">
-              Esta etapa não substitui o backup JSON local. Ela cria uma base para sincronização em nuvem enquanto o modelo
-              relacional completo não é normalizado.
+              Com usuário logado, o app baixa o backup da nuvem em navegadores novos e salva automaticamente alterações locais,
+              incluindo importação de JSON e CSV. Para criar o primeiro backup remoto, entre no mesmo navegador onde os dados
+              locais já existem ou importe o backup depois de entrar.
             </p>
           </CardBody>
         </Card>
