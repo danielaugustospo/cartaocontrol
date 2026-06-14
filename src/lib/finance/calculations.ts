@@ -36,6 +36,26 @@ export const splitAmount = (totalAmount: number, installments: number) => {
 };
 
 export const generatePurchaseInstallments = (purchase: Purchase, card: CreditCard): Installment[] => {
+  if (purchase.importedInvoiceMonth && purchase.importedInvoiceYear) {
+    return [
+      {
+        id: `${purchase.id}-imported`,
+        purchaseId: purchase.id,
+        cardId: purchase.cardId,
+        categoryId: purchase.categoryId,
+        amount: purchase.totalAmount,
+        installmentNumber: 1,
+        totalInstallments: 1,
+        dueMonth: purchase.importedInvoiceMonth,
+        dueYear: purchase.importedInvoiceYear,
+        status: purchase.status,
+        description: purchase.description,
+        purchaseDate: purchase.purchaseDate,
+        installmentLabel: purchase.importedInstallmentLabel ?? "Importado PDF",
+      },
+    ];
+  }
+
   const totalInstallments = purchase.type === "installment" ? Math.max(purchase.installments, 1) : 1;
   const initialInvoice = calculateInvoiceMonth(purchase.purchaseDate, card.closingDay);
   const amounts = splitAmount(purchase.totalAmount, totalInstallments);
@@ -137,7 +157,7 @@ export const buildInvoiceItems = (
       year: installment.dueYear,
       sourceId: installment.purchaseId,
       date: installment.purchaseDate,
-      installmentLabel: `Parcela ${installment.installmentNumber}/${installment.totalInstallments}`,
+      installmentLabel: installment.installmentLabel ?? `Parcela ${installment.installmentNumber}/${installment.totalInstallments}`,
       status: installment.status,
     }));
 

@@ -39,6 +39,10 @@ export type Purchase = {
   installments: number;
   notes?: string;
   status: PurchaseStatus;
+  importedInvoiceMonth?: number;
+  importedInvoiceYear?: number;
+  importedSource?: string;
+  importedInstallmentLabel?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -57,6 +61,7 @@ export type Installment = {
   status: PurchaseStatus;
   description: string;
   purchaseDate: string;
+  installmentLabel?: string;
 };
 
 export type RecurringExpense = {

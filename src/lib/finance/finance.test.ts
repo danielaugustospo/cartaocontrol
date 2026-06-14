@@ -52,6 +52,35 @@ describe("finance calculations", () => {
     expect(installments[11]).toMatchObject({ amount: 100, dueMonth: 1, dueYear: 2027 });
   });
 
+  it("keeps imported PDF purchases in the invoice month detected from the PDF", () => {
+    const purchase: Purchase = {
+      id: "imported-purchase",
+      description: "LISTO *BNVEICULOS",
+      totalAmount: 2736.83,
+      purchaseDate: "2026-01-10",
+      cardId: "card",
+      categoryId: "cat",
+      type: "single",
+      installments: 1,
+      status: "active",
+      importedInvoiceMonth: 5,
+      importedInvoiceYear: 2026,
+      importedSource: "santander-pdf",
+      importedInstallmentLabel: "Parcela 04/06",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const installments = generatePurchaseInstallments(purchase, card);
+    expect(installments).toEqual([
+      expect.objectContaining({
+        amount: 2736.83,
+        dueMonth: 5,
+        dueYear: 2026,
+        installmentLabel: "Parcela 04/06",
+      }),
+    ]);
+  });
+
   it("uses installments but ignores recurring charges for card limit usage", () => {
     const data: FinanceData = {
       cards: [card],

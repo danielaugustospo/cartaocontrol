@@ -1,4 +1,4 @@
-const CACHE_NAME = "cartaocontrol-v1";
+const CACHE_NAME = "cartaocontrol-v2";
 const APP_SHELL = [
   "/",
   "/dashboard",
@@ -36,6 +36,23 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
+  const url = new URL(request.url);
+
+  if (url.origin !== self.location.origin) return;
+
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (!response || response.status !== 200) return response;
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
+          return response;
+        })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

@@ -31,6 +31,10 @@ export const purchaseSchema = z
     installments: z.coerce.number().int().min(1).max(120),
     notes: z.string().optional().or(z.literal("")),
     status: z.enum(["active", "canceled"]),
+    importedInvoiceMonth: z.number().int().min(1).max(12).optional(),
+    importedInvoiceYear: z.number().int().min(2000).max(2100).optional(),
+    importedSource: z.string().optional(),
+    importedInstallmentLabel: z.string().optional(),
   })
   .refine((data) => data.type === "installment" || data.installments === 1, {
     path: ["installments"],

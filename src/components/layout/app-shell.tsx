@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
 
-      <main className="min-h-screen pb-24 lg:pl-72">
+      <main className="min-h-screen pb-40 lg:pb-0 lg:pl-72">
         <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
           {!hydrated ? (
             <div className="grid min-h-[60vh] place-items-center text-sm font-medium text-slate-500">
@@ -82,8 +82,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white px-2 py-2 shadow-lg lg:hidden">
-        {nav.slice(0, 5).map((item) => {
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200 bg-white px-2 py-2 shadow-lg lg:hidden">
+        {nav.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
           return (
@@ -91,12 +91,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-semibold",
+                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-lg text-center text-[10px] font-semibold leading-tight sm:text-[11px]",
                 active ? "bg-teal-50 text-teal-700" : "text-slate-500",
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span className="max-w-full truncate">{item.label}</span>
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="w-full min-w-0 truncate px-1">{item.label}</span>
             </Link>
           );
         })}
